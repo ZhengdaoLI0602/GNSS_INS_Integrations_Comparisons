@@ -42,9 +42,11 @@ And the following matlab figures are expected to be generated after in folder "E
 - After running FGO
   - Traj_FGO.fig (2D trajectory of Truth/GNSS/KF/AKF/FGO)
   - 2dE.fig (2D error of Truth/GNSS/KF/AKF/FGO throughout the time frame)
+  - FGO_satelite_img.fig (2d trajectory of Truth/FGO shown with satellite image)
 - After running AFGO
   - Traj_AFGO.fig (2D trajectory of Truth/GNSS/KF/AKF/FGO/AFGO)
   - 2dE.fig (2D error of Truth/GNSS/KF/AKF/FGO/AFGO throughout the time frame)
+  - AFGO_satelite_img.fig (2d trajectory of Truth/AFGO shown with satellite image)
 
 # Example
 An example of u-blox receiver dataset collected from Kowloon Bay, Hong Kong has been provided in the repository. The target outcomes are shown in the following plots, given in folder "Target Plots".
