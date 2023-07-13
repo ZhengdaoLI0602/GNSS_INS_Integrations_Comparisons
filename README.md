@@ -1,5 +1,6 @@
 # Description
-Based on the thesis titled "", this repository is aimed for comparing 2D positioning solutions between different GNSS/INS integration methods, including Fixed-gain Kalman Filter (KF), Adaptive Kalmam Filter (AKF), Factor Graph Optimization (FGO), and Adaptive Factor Graph Optimization (AFGO). The scripts about FGO are modified based on MATLAB official example [Factor Graph-Based Pedestrian Localization with IMU and GPS Sensors](https://uk.mathworks.com/help/nav/ug/factor-graph-based-pedestrian-localization-imu-gps.html).
+Based on the thesis titled "Deep learning-aided adaptive GNSS/INS integrated positioning with
+Kalman filter (KF) and factor graph optimization (FGO)", this repository is aimed for comparing 2D positioning solutions between different GNSS/INS integration methods, including Fixed-gain Kalman Filter (KF), Adaptive Kalmam Filter (AKF), Factor Graph Optimization (FGO), and Adaptive Factor Graph Optimization (AFGO). The scripts about FGO are modified based on MATLAB official example [Factor Graph-Based Pedestrian Localization with IMU and GPS Sensors](https://uk.mathworks.com/help/nav/ug/factor-graph-based-pedestrian-localization-imu-gps.html).
 
 # How to run problem
 ## STEP 1: Navigate to folder "DataPrepare", run "Make_Format.m" inside folder "DataPrepare"
