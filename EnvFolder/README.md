@@ -1,1 +1,1 @@
-Please find the (example EnvFolder)[] base on u-blox data in Kowloon Bay, Hong Kong
+## Due to limitations on the file size, please find the example EnvFolder at "EnvFolder.zip" of repository [release](https://github.com/ZhengdaoLI0602/MSc_ProjectPersonal/releases/tag/EnvFolder), base on u-blox data in Kowloon Bay, Hong Kong
