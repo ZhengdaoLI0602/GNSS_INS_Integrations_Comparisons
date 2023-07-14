@@ -24,7 +24,7 @@ And the following files are expected to be generated in folder "DataPrepare"
 ## STEP 2: Navigate to root folder, run "Main_GNSS_INS_Integration.m"
 The variable "CurFolder" in the script exactly represents folder "EnvFolder/IniResults"
 
-Configure the variables "KF_ON" and "FGO_ON" in order to execute the four integration methods:
+Configure the variables "KF_ON" and "FGO_ON" to execute the following four integration methods in sequence:
 - KF_ON = [1 0], FGO_ON = [0 0]; run the script (KF)
 - KF_ON = [0 1], FGO_ON = [0 0]; run the script (AKF)
 - KF_ON = [0 0], FGO_ON = [1 0]; run the script (FGO)
