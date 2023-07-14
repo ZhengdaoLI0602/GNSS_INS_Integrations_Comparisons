@@ -50,7 +50,16 @@ And the following matlab figures are expected to be generated after in folder "E
   - AFGO_satelite_img.fig (2d trajectory of Truth/AFGO shown with satellite image)
 
 # Example
-An example of u-blox receiver dataset collected from Kowloon Bay, Hong Kong has been provided in the repository. The target outcomes (i.e., 2D trajectory and errors) are shown in the following plots, given in folder "Target Plots".
-![ublox](https://github.com/ZhengdaoLI0602/GNSS_INS_Integrations_Comparisons/assets/80500317/56eec598-3983-45b8-8262-0114f45a4e13)![UBLOX](https://github.com/ZhengdaoLI0602/GNSS_INS_Integrations_Comparisons/assets/80500317/d8e4052b-46f1-4337-9ad0-d26f031708bf)
+An example of u-blox receiver dataset collected from Kowloon Bay, Hong Kong has been provided in the repository. The target outcomes are shown in the following plots, given in folder "Target Plots".
+- Summary
+  ||GNSS|KF|AKF|FGO|AFGO|
+  |---|---|---|---|---|---|
+  |2D Root Mean Square Error [m]|26.39|67.29|62.78|23.77|18.10|
+  |2D Standard Deviation [m]|22.30|61.03|55.64|18.11|12.98|
+- 2D Trajectory
+  ![ublox](https://github.com/ZhengdaoLI0602/GNSS_INS_Integrations_Comparisons/assets/80500317/56eec598-3983-45b8-8262-0114f45a4e13)
+- 2D Error throughout the frame
+  ![UBLOX](https://github.com/ZhengdaoLI0602/GNSS_INS_Integrations_Comparisons/assets/80500317/d8e4052b-46f1-4337-9ad0-d26f031708bf)
+
 
 
