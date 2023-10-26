@@ -49,7 +49,7 @@ And the following matlab figures are expected to be generated after in folder "E
   - AFGO_satelite_img.fig (2d trajectory of Truth/AFGO shown with satellite image)
 
 # Example
-An example of u-blox receiver dataset collected from Kowloon Bay, Hong Kong has been provided in the repository. The collection was done by group in [Intelligent Positioning And Navigation Laboratory](https://www.polyu-ipn-lab.com/) using similar standards with [URBANNAV dataset](https://www.polyu-ipn-lab.com/urbannav). The target outcomes are depicted in the following plots, given in folder "Target Plots".
+An example of u-blox receiver dataset collected from Kowloon Bay, Hong Kong has been provided in the repository. The collection was done by group in [Intelligent Positioning And Navigation Laboratory](https://www.polyu-ipn-lab.com/) using similar standards with [UrbanNav dataset](https://www.polyu-ipn-lab.com/urbannav). The target outcomes are depicted in the following plots, given in folder "Target Plots".
 - Summary
   ||KF|AKF|FGO|AFGO|
   |---|---|---|---|---|
