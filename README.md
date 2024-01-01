@@ -53,12 +53,13 @@ An example of u-blox receiver dataset collected from [Kowloon Bay, Hong Kong](ht
 - Summary
   ||KF|AKF|FGO|AFGO|
   |---|---|---|---|---|
-  |2D Root Mean Square Error [m]|67.29|62.78|23.77|18.10|
-  |2D Standard Deviation [m]|61.03|55.64|18.11|12.98|
+  |2D Root Mean Square Error [m]|70.18|66.84|24.35|19.35|
+  |2D Standard Deviation [m]|61.72|59.19|18.71|14.09|
 - 2D Trajectory
-  ![ublox](https://github.com/ZhengdaoLI0602/GNSS_INS_Integrations_Comparisons/assets/80500317/56eec598-3983-45b8-8262-0114f45a4e13)
+  ![ublox_traj](https://github.com/ZhengdaoLI0602/GNSS_INS_Integrations_Comparisons/assets/80500317/ba8c2d80-bd2f-40f7-ac64-141f05f35818)
 - 2D Error throughout the frame
-  ![UBLOX](https://github.com/ZhengdaoLI0602/GNSS_INS_Integrations_Comparisons/assets/80500317/d8e4052b-46f1-4337-9ad0-d26f031708bf)
+  ![ublox_2dE](https://github.com/ZhengdaoLI0602/GNSS_INS_Integrations_Comparisons/assets/80500317/0daa70d9-9e24-4ee8-b670-b51fd9794b71)
+
 
 
 
