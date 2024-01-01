@@ -1,4 +1,4 @@
-function [LCKF_result,GNSS_llh,IMU_data,Ucts] = LCKF_INS_GNSS_debug(GNSS_data, IMU_data,...
+function [SVs, LCKF_result, GNSS_llh, IMU_data, Ucts] = LCKF_INS_GNSS_debug(GNSS_data, IMU_data,...
                                      LC_KF_config, fixed_uct, ml_prediction, whether_adaptive, receiver)
 
 % ------------------------------------------------------------------------
@@ -12,82 +12,24 @@ function [LCKF_result,GNSS_llh,IMU_data,Ucts] = LCKF_INS_GNSS_debug(GNSS_data, I
 % guo-hao.zhang@connect.polyu.hk
 % ------------------------------------------------------------------------
 
-
 D2R = pi/180;
 R2D = 180/pi;
 
-% load("debug\ComInfo.mat");
-% load("debug\IMUGNSS4KF.mat");
-% load("debug\Solu.mat");
-% load('debug\all.mat');
-% GNSS_data(259,:)=[];
 
-% % Position measurement noise SD per axis (m)
-% LC_KF_config.pos_meas_SD = 5;
-% % Velocity measurement noise SD per axis (m/s)
-% LC_KF_config.vel_meas_SD = 10;
-
-% IMU_data = IMU_Data;
-% GNSS_data = GNSS_Data;
 %% Begins
 % Loosely coupled ECEF Inertial navigation and GNSS integrated navigation
-% simulation
-% no_epochs_GT = size(CPT_data,1);
 no_epochs_IMU = size(IMU_data,1);
-% no_epochs_IMU = 120000;
 no_epochs_GNSS = size(GNSS_data,1);
-% user_pos_xyz0 = llh2xyz(CPT_data(1,4:6).*[D2R,D2R,1]);
 user_pos_xyz0 = llh2xyz(GNSS_data{1,2}([2,1,3]).*[D2R,D2R,1]);
 
 % True Velocity
-% temp.GT_t = CPT_data(:,1);
 ini_v_eb_n = GNSS_data{1,13};
 for id = 1:1:no_epochs_GNSS
-%     [~,temp.GT_id] = min(abs(temp.GT_t-GNSS_data{id,12}));
-%     temp.V_enu = [CPT_data(temp.GT_id,8),CPT_data(temp.GT_id,7),-CPT_data(temp.GT_id,9)];
-%     temp.VR_xyz = enu2xyz(temp.V_enu,user_pos_xyz0);
-%     temp.V_xyz = temp.VR_xyz - user_pos_xyz0';
-%     GNSS_vel_error(id,1) = norm(temp.V_xyz-GNSS_data{id,13});
-%     GNSS_data{id,13} = temp.V_xyz;
     GNSS_data{id,15} = [GNSS_data{id,10}(:,1),GNSS_data{id,11}(:,1),...
                         GNSS_data{id,10}(:,3:5),GNSS_data{id,11}(:,2:5)];
 end
 
-% AHRS regulation (moved into the preprocess files)
-% for idt = 1:size(IMU_data,1)
-%     disp(['AHRS Processing ',num2str(idt),'/',num2str(size(IMU_data,1))])
-%     temp_imu_eul(idt,1) = IMU_data(idt,1);
-%     temp_imu_eul(idt,2:4) = quat2eul(IMU_data(idt,10:13)).*[R2D,R2D,R2D];
-%     %yaw
-%     temp_imu_eul(idt,4) = -temp_imu_eul(idt,4);
-%     if temp_imu_eul(idt,4) < 0
-%         temp_imu_eul(idt,4) = temp_imu_eul(idt,4)+360;
-%     end
-%     %roll
-%     if temp_imu_eul(idt,2)<0
-%         temp_imu_eul(idt,2) = temp_imu_eul(idt,2)+360;
-%     end
-%     temp_imu_eul(idt,2) = -temp_imu_eul(idt,2)+180;
-%     %pitch
-%     temp_imu_eul(idt,3) = -temp_imu_eul(idt,3);
-% end
-% IMU_data(:,14:16) = temp_imu_eul(:,[3,2,4]); %(pitch; roll; yaw)
-
-
 %% Initialize true navigation solution
-% by CPT
-% old_time = IMU_data(1,2)+IMU_data(1,3)*1e-9;
-% old_time = IMU_data(1,1);
-% true_L_b = CPT_data(1,4)*D2R;
-% true_lambda_b = CPT_data(1,5)*D2R;
-% true_h_b = CPT_data(1,6);
-% true_v_eb_n = CPT_data(1,7:9)';
-% true_eul_nb = CPT_data(1,10:12)';
-% true_C_b_n = Euler_to_CTM(true_eul_nb)';
-% [~,~,true_c_e_n,old_true_C_b_e] =...
-%     NED_to_ECEFdebug(true_L_b,true_lambda_b,true_h_b,true_v_eb_n,true_C_b_n); %coordinate transformation [what is NED?]
-
-
 % by XSENS
 old_time = IMU_data(1,1);
 ini_L_b = GNSS_data{1,2}(2)*D2R;
@@ -171,18 +113,23 @@ end % for i
 
 
 %% Main loop
-% critical_epoch = 1e8;
-% start_epoch = floor(IMU_data(1,1)) + 1;
 Ucts = [];
 if whether_adaptive == 1
     adaptiveR = ml_prediction(1,2);
 elseif whether_adaptive == 0
     adaptiveR = fixed_uct;
 end
-% adaptiveR = 25;
+
 % Manually set to the next epoch %
 GNSS_epoch = 2;
 whether_integrate = 'Yes';
+SVs = [];
+P_matrix_s = {};
+Phi_matrix_s = {};
+
+test_ind = 7:9; % index of positions for RTS smoother
+P_matrix_s(1,:) = {P_matrix(test_ind, test_ind), P_matrix(test_ind, test_ind)};
+SVs(1,:) = old_est_r_eb_e;
 
 for epoch = 2:no_epochs_IMU 
     float_GNSS_epoch = round(epoch/400, 2);
@@ -190,7 +137,7 @@ for epoch = 2:no_epochs_IMU
     ceil_epoch = ceil(float_GNSS_epoch);
 
     if abs(float_GNSS_epoch-floor_epoch)<4e-3 || abs(float_GNSS_epoch-ceil_epoch)<4e-3 
-        disp(['GNSS Epoch ==> ',num2str(float_GNSS_epoch),'/',num2str(round(no_epochs_IMU/400)),'  ','GNSS solution uct: ',num2str(adaptiveR)]);
+        disp(['GNSS Epoch ==> ',num2str(float_GNSS_epoch),'/',num2str(round(no_epochs_IMU/400)),'  ','GNSS solution uct: ',num2str(adaptiveR), ' Integrate: ', whether_integrate]);
     end
 
     % Input data from motion profile
@@ -206,8 +153,8 @@ for epoch = 2:no_epochs_IMU
     meas_omega_ib_b = [IMU_data(epoch,8)*0;...
                        IMU_data(epoch,7)*0;...
                        -IMU_data(epoch,9)];
-    meas_f_ib_b = meas_f_ib_b - est_IMU_bias(1:3);
-    meas_omega_ib_b = meas_omega_ib_b - est_IMU_bias(4:6);
+    meas_f_ib_b = meas_f_ib_b - est_IMU_bias(1:3); % accelerometer
+    meas_omega_ib_b = meas_omega_ib_b - est_IMU_bias(4:6); % gyroscope
     
     % linear acc in imu %
     LCKF_result(epoch, 12:14) = meas_f_ib_b';
@@ -222,10 +169,6 @@ for epoch = 2:no_epochs_IMU
     float_GNSS_time = time + GNSS_data{1,1};
 
     % Determine whether to update GNSS simulation and run Kalman filter
-%     if  GNSS_epoch<size(GNSS_data,1) && time >= GNSS_data{GNSS_epoch+1, 12}
-
-    
-
     if  GNSS_epoch<size(GNSS_data,1) && float_GNSS_time >= GNSS_data{GNSS_epoch, 1} 
     % Add GNSS ----- starts integration
         temp.prn = GNSS_data{GNSS_epoch,10}(:,1);
@@ -253,15 +196,11 @@ for epoch = 2:no_epochs_IMU
             GNSS_r_eb_e = GNSS_r_eb_e';
             GNSS_v_eb_e = Doppler_V;
 
-            % ---- True GNSS debug ----
-%             id_cpt = find(CPT_Data(:,3)==GNSS_data{GNSS_epoch,1});
-%             GNSS_r_eb_e = llh2xyz(CPT_Data(id_cpt,4:6).*[D2R,D2R,1])';
-%             GNSS_llh_gt(GNSS_epoch,:) = xyz2llh(GNSS_r_eb_e).*[R2D,R2D,1];
 
             % -------------------------
             if whether_adaptive == 1
                 % added by LZD on 2023.04.25 % Adaptive KF
-                adaptiveR = AdaptiveR(GNSS_data{GNSS_epoch, 1}, ml_prediction, receiver);   
+                adaptiveR = AdaptiveR(GNSS_data{GNSS_epoch, 1}, ml_prediction, fixed_uct, receiver);   
             elseif whether_adaptive == 0
                 % added by LZD on 2021.12.27 % Fixed KF
                 adaptiveR = fixed_uct;
@@ -270,11 +209,13 @@ for epoch = 2:no_epochs_IMU
             Ucts(GNSS_epoch-1, 1) = GNSS_data{GNSS_epoch, 1};
             Ucts(GNSS_epoch-1, 2) = adaptiveR;
 
+            
             % Run Integration Kalman filter
-            [est_C_b_e,est_v_eb_e,est_r_eb_e,est_IMU_bias,P_matrix] =...
+            [est_C_b_e,est_v_eb_e,est_r_eb_e,est_IMU_bias,P_matrix_propagated, P_matrix, Phi_matrix] =...
                 LC_KF_Epoch(GNSS_r_eb_e,GNSS_v_eb_e,tor_s,est_C_b_e,...
                 est_v_eb_e,est_r_eb_e,est_IMU_bias,P_matrix,meas_f_ib_b,...
                 est_L_b,LC_KF_config, adaptiveR);
+
 
             % Generate IMU bias and clock output records
             out_IMU_bias_est(GNSS_epoch,1) = time;
@@ -300,41 +241,54 @@ for epoch = 2:no_epochs_IMU
         whether_integrate = 'No';
     end % if time 
 
-    % ---true attitude debug
-%     est_C_b_n = c_e_n * est_C_b_e;
-%     temp_eul = CTM_to_Euler(est_C_b_n')';
-%     est_C_b_n = Euler_to_CTM([0,0,temp_eul(3)])';
-%     est_C_b_e = c_e_n' * est_C_b_n;
 
     % Convert navigation solution to NED
     [est_L_b,est_lambda_b,est_h_b,est_v_eb_n,est_C_b_n] =...
         ECEF_to_NED(est_r_eb_e,est_v_eb_e,est_C_b_e);
 
-%     att_debug(epoch,1:3) = CTM_to_Euler(est_C_b_n')'.*[R2D,R2D,R2D];
-    
     est_C_b_n = c_e_n * est_C_b_e; % "c_e_n: ECEF to NED"; "est_C_b_e: estimated body to ECEF"; 
-%     est_v_b = (est_C_b_n') * (c_e_n* est_v_eb_e);
-
-%     att_debug(epoch,4:6) = CTM_to_Euler(est_C_b_n')'.*[R2D,R2D,R2D];
 
     % Generate output profile record
     LCKF_result(epoch,1) = time;
-    LCKF_result(epoch,2) = est_L_b*R2D;
-    LCKF_result(epoch,3) = est_lambda_b*R2D;
-    LCKF_result(epoch,4) = est_h_b;
-    LCKF_result(epoch,5:7) = est_v_eb_n';
-    LCKF_result(epoch,8:10) = CTM_to_Euler(est_C_b_n')'.*[R2D,R2D,R2D];
+    LCKF_result(epoch,2) = est_L_b*R2D; % latitude in body frame
+    LCKF_result(epoch,3) = est_lambda_b*R2D; % longitude in body frame
+    LCKF_result(epoch,4) = est_h_b; % altitude (height) in body frame
+    LCKF_result(epoch,5:7) = est_v_eb_n'; 
+    LCKF_result(epoch,8:10) = CTM_to_Euler(est_C_b_n')'.*[R2D,R2D,R2D]; % orientation in body frame
+    % col9 has problems: complex number results %
     if LCKF_result(epoch,10) < 0
         LCKF_result(epoch,10) = LCKF_result(epoch,10)+360;
     end
     LCKF_result(epoch,11) = adaptiveR; % document the uncertainty of GNSS solutions
 
+
+    %% ---------------- Save essential elements in RTS smoother 
+
+    if mod(epoch,400)==0
+        P_matrix_s = [P_matrix_s;[{P_matrix_propagated(test_ind, test_ind)},{P_matrix(test_ind, test_ind)}]];
+        Phi_matrix_s = [Phi_matrix_s; {Phi_matrix(test_ind, test_ind)}];
+        this_SV = est_r_eb_e';
+        
+        SVs  = [SVs; this_SV];
+    end
+
+
     % Reset old values
     old_time = time;
-    old_est_r_eb_e = est_r_eb_e;
-    old_est_v_eb_e = est_v_eb_e;
-    old_est_C_b_e = est_C_b_e;
+    old_est_r_eb_e = est_r_eb_e; % position
+    old_est_v_eb_e = est_v_eb_e; % velocity
+    old_est_C_b_e = est_C_b_e;   % orientation (with transformation matrix)
 end
 
 
+%% ---------------- RTS smoother
+for iii = size(SVs,1): -1 :2
+    K_matrix_smoothed{iii,1} = P_matrix_s{iii-1,2} * Phi_matrix_s{iii-1}' * inv(P_matrix_s{iii,1});
+    P_matrix_s{iii-1, 2} = P_matrix_s{iii-1, 2} + K_matrix_smoothed{iii,1} * (P_matrix_s{iii, 2} - P_matrix_s{iii, 1}) * K_matrix_smoothed{iii,1}';   
+    SVs(iii-1,:) = SVs(iii-1,:) + (K_matrix_smoothed{iii,1} * (SVs(iii,:)' - SVs(iii-1,:)'))';
+end
+
+for i = 1:size(SVs,1)
+    SVs(i,4:6)=ECEF_to_NED_r_only(SVs(i,1:3)); % col 1-3: smoothed ECEF; col 4-6: smoothed LLH
+end
 
