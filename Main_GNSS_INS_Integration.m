@@ -31,11 +31,10 @@ FGO_ON = [1 0]; %[FGO, AFGO]
 Fixed_KF_Uct = 30;
 receiver = 'ublox';
 min_uct = 1.5;
-max_uct = 65;
-tuning_factor_FGO = 1/8.5; 
+max_uct = 65; 
 
 % FGO uncertainty parameters
-Fixed_FGO_Uct = Fixed_KF_Uct * tuning_factor_FGO;
+Fixed_FGO_Uct = Fixed_KF_Uct;
 
 % (user-defined)Period for plotting and error calculation in both KF and FGO %
 mannual_set_period = 920; 
@@ -100,7 +99,7 @@ if ismember(1, KF_ON)
           whether_adaptive = 0;
     end
 
-    [LCKF_result, GNSS_llh, IMU_Data, Ucts] = LCKF_INS_GNSS_debug(GNSS_Data,IMU_Data,LC_KF_config, Fixed_KF_Uct, ml_prediction, whether_adaptive, receiver); 
+    [SVs, LCKF_result, GNSS_llh, IMU_Data, Ucts] = LCKF_INS_GNSS_debug(GNSS_Data,IMU_Data,LC_KF_config, Fixed_KF_Uct, ml_prediction, whether_adaptive, receiver); 
 
     ProsTime(1) = toc; % document the processing time (@KF) 
     
@@ -144,8 +143,8 @@ if ismember(1, KF_ON)
         temp.err2_GNSS_ls_enu = norm(temp.err2_GNSS_ls_enu_com(1,1:2)); % LS enu
         
         [~, id_LCKF_pos] = min(abs(LCKF_result(:,1) - CPT_Data(idt,1)));
-        temp.LCKF_xyz = llh2xyz([LCKF_result(id_LCKF_pos, 2:3), CPT_Data(idt,6)].*[D2R,D2R,1]); 
-        temp.LCKF_enu = lla2enu([LCKF_result(id_LCKF_pos, 2:3), CPT_Data(idt,6)],lla0,"ellipsoid");
+        temp.LCKF_xyz = [SVs(idt, 1:2), CPT_Data(idt,6)];  
+        temp.LCKF_enu = lla2enu([SVs(idt, 4:5), CPT_Data(idt,6)],lla0,"flat");
         id_LCKF(idt-1,1) = id_LCKF_pos;
 
         %2d lckf
@@ -279,6 +278,7 @@ if ismember(1, KF_ON)
     if isequal(KF_ON,[1 0])
         Solu.FKF_result(:,1) = IMU_Data(:,20);
         Solu.FKF_result(:,2:4) = LCKF_result(:,2:4);
+        Solu.FKF_SVs = SVs;
 
         for i = 1 :size(Solu.Error_2D_enu, 1)
             % Find all the imu data in this second %
@@ -286,7 +286,7 @@ if ismember(1, KF_ON)
             % document GNSS time %
             Solu.FKF_result_in_second(i,1) = Solu.Error_2D_enu(i,1);
             % select the first imu data point in this second as the KF LLH result %
-            Solu.FKF_result_in_second(i,2:4) =  Solu.FKF_result(imu_data_this_epoch(1,1), 2:4);
+            Solu.FKF_result_in_second(i,2:4) =  Solu.FKF_SVs(i,4:6);
         end
         
         % Get ENU solution for LCKF % (time-consuming)
@@ -302,14 +302,15 @@ if ismember(1, KF_ON)
     elseif isequal(KF_ON,[0 1])
         Solu.AKF_result(:,1) = IMU_Data(:,20);
         Solu.AKF_result(:,2:4) = LCKF_result(:,2:4);
-
+        Solu.AKF_SVs = SVs;
+        
         for i = 1 :size(Solu.Error_2D_enu, 1)
             % Find all the imu data in this second %
             imu_data_this_epoch = find(floor(Solu.AKF_result(:,1))== Solu.Error_2D_enu(i,1));
             % document GNSS time %
             Solu.AKF_result_in_second(i,1) = Solu.Error_2D_enu(i,1);
             % select the first imu data point in this second as the KF LLH result %
-            Solu.AKF_result_in_second(i,2:4) =  Solu.AKF_result(imu_data_this_epoch(1,1), 2:4);
+            Solu.AKF_result_in_second(i,2:4) =  Solu.AKF_SVs(i,4:6);
 
             ucts_data_this_epoch = find(Ucts(:,1)== Solu.Error_2D_enu(i,1));
             if ~isempty(ucts_data_this_epoch)
