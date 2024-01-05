@@ -49,7 +49,7 @@ And the following matlab figures are expected to be generated after in folder "E
   - AFGO_satelite_img.fig (2d trajectory of Truth/AFGO shown with satellite image)
 
 # Example
-An example of u-blox receiver dataset collected from [Kowloon Bay, Hong Kong](https://www.google.com/maps/place/%E4%B9%9D%E9%BE%99%E6%B9%BE/@22.3207264,114.2052806,16z/data=!4m6!3m5!1s0x34040139ce5cb28d:0xebb076fb9d3032f4!8m2!3d22.3080749!4d114.2018982!16zL20vMDIyeng3?entry=ttu) has been provided in the repository. The collection was done by group in [Intelligent Positioning And Navigation Laboratory](https://www.polyu-ipn-lab.com/) using similar standards with [UrbanNav dataset](https://www.polyu-ipn-lab.com/urbannav). The target outcomes are depicted in the following plots and stored in folder "Target Plots".
+An example of u-blox receiver dataset collected from [Kowloon Bay, Hong Kong](https://www.google.com/maps/place/%E4%B9%9D%E9%BE%99%E6%B9%BE/@22.3207264,114.2052806,16z/data=!4m6!3m5!1s0x34040139ce5cb28d:0xebb076fb9d3032f4!8m2!3d22.3080749!4d114.2018982!16zL20vMDIyeng3?entry=ttu) has been provided in the repository. The collection was done by group in [Intelligent Positioning And Navigation Laboratory](https://github.com/IPNL-POLYU) using similar standards with [UrbanNav dataset](https://www.polyu-ipn-lab.com/urbannav). The target outcomes are depicted in the following plots and stored in folder "Target Plots".
 - Summary
   ||KF|AKF|FGO|AFGO|
   |---|---|---|---|---|
