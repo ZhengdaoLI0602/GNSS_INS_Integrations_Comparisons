@@ -1,5 +1,5 @@
 function [est_C_b_e_new,est_v_eb_e_new,est_r_eb_e_new,est_IMU_bias_new,...
-            P_matrix_new] = LC_KF_Epoch(GNSS_r_eb_e,GNSS_v_eb_e,tor_s,...
+            P_matrix_propagated, P_matrix_new, Phi_matrix] = LC_KF_Epoch(GNSS_r_eb_e,GNSS_v_eb_e,tor_s,...
             est_C_b_e_old,est_v_eb_e_old,est_r_eb_e_old,est_IMU_bias_old,...
             P_matrix_old,meas_f_ib_b,est_L_b_old,LC_KF_config, adaptiveR)
 %LC_KF_Epoch - Implements one cycle of the loosely coupled INS/GNSS
@@ -57,7 +57,7 @@ Omega_ie = Skew_symmetric([0,0,omega_ie]);
        
 % SYSTEM PROPAGATION PHASE
 
-% 1. Determine transition matrix using (14.50) (first-order approx)
+% 1. Determine transition matrix using (14.50) (first-order approx) (Dim:15*15)
 Phi_matrix = eye(15);
 Phi_matrix(1:3,1:3) = Phi_matrix(1:3,1:3) - Omega_ie * tor_s;
 Phi_matrix(1:3,13:15) = est_C_b_e_old * tor_s;
@@ -105,19 +105,19 @@ R_matrix(4:6,1:3) = zeros(3);
 R_matrix(4:6,4:6) = eye(3) * LC_KF_config.vel_meas_SD^2;
 
 
-% 7. Calculate Kalman gain using (3.21)
+% 7. Calculate Kalman gain using (3.21) (Dim:15*6)
 K_matrix = P_matrix_propagated * H_matrix' * inv(H_matrix *...
     P_matrix_propagated * H_matrix' + R_matrix);
 
 % 8. Formulate measurement innovations using (14.102), noting that zero
-% lever arm is assumed here
+% lever arm is assumed here (Dim: 6*1)
 delta_z(1:3,1) = GNSS_r_eb_e - est_r_eb_e_old;
 delta_z(4:6,1) = GNSS_v_eb_e - est_v_eb_e_old;
 
-% 9. Update state estimates using (3.24)
+% 9. Update state estimates using (3.24) (Dim: 15*1)
 x_est_new = x_est_propagated + K_matrix * delta_z;
 
-% 10. Update state estimation error covariance matrix using (3.25)
+% 10. Update state estimation error covariance matrix using (3.25) (Dim:15*15)
 P_matrix_new = (eye(15) - K_matrix * H_matrix) * P_matrix_propagated;
 
 % CLOSED-LOOP CORRECTION
