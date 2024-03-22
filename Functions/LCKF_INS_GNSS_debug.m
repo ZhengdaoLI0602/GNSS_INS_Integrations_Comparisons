@@ -199,7 +199,7 @@ for epoch = 2:no_epochs_IMU
 
             % -------------------------
             if whether_adaptive == 1
-                % modified by LZD on 2024.03.27 % Adaptive KF
+                % modified by LZD on 2024.03.22 % Adaptive KF
                 adaptiveR = AdaptiveR(GNSS_data{GNSS_epoch, 1}, ml_prediction, receiver);   
             elseif whether_adaptive == 0
                 % modified by LZD on 2021.12.27 % Fixed KF
