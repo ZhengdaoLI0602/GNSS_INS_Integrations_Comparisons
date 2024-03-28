@@ -38,6 +38,9 @@ Fixed_FGO_Uct = Fixed_KF_Uct;
 
 % (user-defined)Period for plotting and error calculation in both KF and FGO %
 mannual_set_period = 920; 
+
+% (user-defined) Tuning factor on solution uncertainty for MATLAB FGO
+tuning_factor_FGO = 0.25;
  
 
 %% CONFIGURATION 
