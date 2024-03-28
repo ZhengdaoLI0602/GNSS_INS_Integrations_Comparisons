@@ -33,14 +33,16 @@ receiver = 'ublox';
 min_uct = 1.5;
 max_uct = 65; 
 
+
+% (user-defined) Tuning factor on solution uncertainty for MATLAB FGO
+tuning_factor_FGO = 0.25;
+
 % FGO uncertainty parameters
-Fixed_FGO_Uct = Fixed_KF_Uct;
+Fixed_FGO_Uct = Fixed_KF_Uct * tuning_factor_FGO;
 
 % (user-defined)Period for plotting and error calculation in both KF and FGO %
 mannual_set_period = 920; 
 
-% (user-defined) Tuning factor on solution uncertainty for MATLAB FGO
-tuning_factor_FGO = 0.25;
  
 
 %% CONFIGURATION 
@@ -412,10 +414,10 @@ if ismember(1,FGO_ON)
         % 2. Create an IMU factor and add to factor graph. 
         fIMU = factorIMU(currNodeIDs, ...                        % current node IDs (e.g., [1,2,3,4,5,6])
                          imuFs, ...                              % imu sampling frequency (i.e.,400)
-                         LC_KF_config.gyro_bias_PSD*eye(3),...   % gyro bias PSD (same in LCKF)
-                         LC_KF_config.accel_bias_PSD*eye(3),...  % accel bias PSD
-                         LC_KF_config.gyro_noise_PSD*eye(3),...  % gyro noise PSD
-                         LC_KF_config.accel_noise_PSD*eye(3),... % accel noise PSD
+                         LC_KF_config.gyro_bias_PSD*eye(3)/imuFs,...   % gyro bias PSD (same in LCKF)
+                         LC_KF_config.accel_bias_PSD*eye(3)/imuFs,...  % accel bias PSD
+                         LC_KF_config.gyro_noise_PSD*eye(3)*imuFs,...  % gyro noise PSD
+                         LC_KF_config.accel_noise_PSD*eye(3)*imuFs,... % accel noise PSD
                          sensorData{ii}.GyroReadings,...         % gyro & accel readings
                          sensorData{ii}.AccelReadings);
         addFactor(G,fIMU);
@@ -455,9 +457,8 @@ if ismember(1,FGO_ON)
             addFactor(G,fGPS);
 
         else
-            % set uct to be nan, indicating no GNSS factor added (no GNSS/INS integration)%
-            adaptiveUct = nan;
-            this_uct = adaptiveUct;
+            % set uct to be 0, indicating no GNSS factor added (no GNSS/INS integration)%
+            adaptiveUct = 0;
         end
 
 
@@ -470,10 +471,12 @@ if ismember(1,FGO_ON)
 
         % 6. Optimize the factor graph.
         if (mod(ii,numGPSSamplesPerOptim) == 0) || (ii == numGPSSamples)
-            solnInfo = optimize(G,opts);
-            % Visualize the current position estimate.
-            FGO_LLH = updatePlot(visHelper,ii,G,poseIDs,posLLH,lla0,numIMUSamplesPerGPS);
-            drawnow
+            if ii~=1
+                solnInfo = optimize(G,opts);
+                % Visualize the current position estimate.
+                FGO_LLH = updatePlot(visHelper,ii,G,poseIDs,posLLH,lla0,numIMUSamplesPerGPS);
+                drawnow
+            end
         end
     
 
@@ -484,10 +487,9 @@ if ismember(1,FGO_ON)
     
         currNodeIDs = currNodeIDs + numNodesPerTimeStep;
         if isequal(FGO_ON,[1 0])
-            this_uct = Fixed_KF_Uct;
-            disp(['===> FGO Progress ',num2str(ii), ' of ', num2str(numGPSSamples),'   ', 'GNSS solution uct: ', num2str(this_uct)]);
+            disp(['===> FGO Progress ',num2str(ii), ' of ', num2str(numGPSSamples),'   ', 'GNSS solution uct: ', num2str(adaptiveUct)]);
         else
-            disp(['===> AFGO Progress ',num2str(ii), ' of ', num2str(numGPSSamples),'   ', 'GNSS solution uct: ', num2str(this_uct)]);
+            disp(['===> AFGO Progress ',num2str(ii), ' of ', num2str(numGPSSamples),'   ', 'GNSS solution uct: ', num2str(adaptiveUct)]);
         end
 
         % Document GNSS time
@@ -495,6 +497,17 @@ if ismember(1,FGO_ON)
         % Document GNSS solution uncertainty
         document_uct(ii,2) = adaptiveUct; 
     end
+
+
+    % get the estimated positions in advanced 20231210
+    FGO_LLH = zeros(921,3);
+    for ii = 1:numel(poseIDs)
+        this_G_enu = nodeState(G, poseIDs(ii));
+        % Estimated current ENU position %
+        FGO_LLH(ii,1:3) = enu2lla(this_G_enu(1:3), lla0, "flat");
+    end %
+    FGO_LLH(1,:)=[];
+
 
     % Extract all the GNSS epochs %
     FGO_GNSST = [];
@@ -534,7 +547,7 @@ if ismember(1,FGO_ON)
     
     % posLLH is GT position in llh %
     % GT ENU of all epochs
-    onBoardPos = lla2enu(posLLH, lla0,"ellipsoid"); 
+    onBoardPos = lla2enu(posLLH, lla0,"flat"); 
     % Estimated ENU positions of GNSS epochs
     estPos = zeros(numel(poseIDs),3); 
     for ii = 1:numel(poseIDs)
