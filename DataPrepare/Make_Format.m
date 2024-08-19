@@ -178,8 +178,8 @@ disp('===> Valid epochs after feature selection complete <===');
 num_gnss_pseu_epoch = GNSS_Data{end,1} - GNSS_Data{1,1} + 1;
 
 for idt = 1: 1: num_gnss_pseu_epoch
-    sensorData {1,idt}. GyroReadings = IMU_Data (floor(IMU_Data(:,20))==(Stime+idt), 11:13);
-    sensorData {1,idt}. AccelReadings = IMU_Data (floor(IMU_Data(:,20))==(Stime+idt), 8:10);
+    sensorData {1,idt}. GyroReadings = IMU_Data (floor(IMU_Data(:,20))==(Stime+idt), 7:9);
+    sensorData {1,idt}. AccelReadings = IMU_Data (floor(IMU_Data(:,20))==(Stime+idt), 4:6);
     sensorData {1,idt}. numIMUReadings = 400; %length(GNSS_Data{idt,19});
     numIMUSamplesPerGPS (idt,1) = 400; %length(GNSS_Data{idt,19});
     sensorData {1,idt}. GnssT = Stime+idt;
