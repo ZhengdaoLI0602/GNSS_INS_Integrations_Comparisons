@@ -35,7 +35,7 @@ max_uct = 65;
 
 
 % (user-defined) Tuning factor on solution uncertainty for MATLAB FGO
-tuning_factor_FGO = 0.25;
+tuning_factor_FGO = 0.2;
 
 % FGO uncertainty parameters
 Fixed_FGO_Uct = Fixed_KF_Uct * tuning_factor_FGO;
@@ -414,10 +414,10 @@ if ismember(1,FGO_ON)
         % 2. Create an IMU factor and add to factor graph. 
         fIMU = factorIMU(currNodeIDs, ...                        % current node IDs (e.g., [1,2,3,4,5,6])
                          imuFs, ...                              % imu sampling frequency (i.e.,400)
-                         LC_KF_config.gyro_bias_PSD*eye(3)/imuFs,...   % gyro bias PSD (same in LCKF)
-                         LC_KF_config.accel_bias_PSD*eye(3)/imuFs,...  % accel bias PSD
-                         LC_KF_config.gyro_noise_PSD*eye(3)*imuFs,...  % gyro noise PSD
-                         LC_KF_config.accel_noise_PSD*eye(3)*imuFs,... % accel noise PSD
+                         LC_KF_config.gyro_bias_PSD*eye(3),...   % gyro bias PSD (same in LCKF)
+                         LC_KF_config.accel_bias_PSD*eye(3),...  % accel bias PSD
+                         LC_KF_config.gyro_noise_PSD*eye(3),...  % gyro noise PSD
+                         LC_KF_config.accel_noise_PSD*eye(3),... % accel noise PSD
                          sensorData{ii}.GyroReadings,...         % gyro & accel readings
                          sensorData{ii}.AccelReadings);
         addFactor(G,fIMU);
