@@ -58,12 +58,13 @@ imu_data = IMU_dataConverter([EnvFolder , IMUFileName]);
 % col (1): UTC_time
 % col (4-6): linear acceleration (axis: x, y, z)
 % col (7-9): angular velocity (axis: x, y, z)
-% col (10-13): orientation (axis: x,y,z,w)
+% col (10-13): orientation (axis: w,x,y,z)
+
 
 IMU_Data = [imu_data(:,1), zeros(size(imu_data,1),2), imu_data(:,2:11)];  
 IMU_Data(:,20) = IMU_Data(:,1); % document IMU GPST
 
-All_Orient = IMU_Data(:,10:13);
+All_Orient = IMU_Data(:,10:13); % (w,x,y,z)
 disp('===> IMU data loading complete <===');
 
 
@@ -170,7 +171,7 @@ ml_prediction = double([valid_ts_in_pca, labels_pred, labels_test]);
 
 % CPT_Data -> IMU data& GNSS data %
 End_epoch = min(floor(IMU_Data(end,20)), GNSS_Data{end,1});
-CPT_Data(find(CPT_Data(:,3)==End_epoch) +1: end, :) = []; 
+CPT_Data(find(CPT_Data(:,3)==End_epoch)+1: end, :) = []; 
 
 disp('===> Valid epochs after feature selection complete <===');
 
@@ -206,21 +207,9 @@ for idt = 1:size(IMU_Data,1)
         disp(['AHRS Processing==> ',num2str(idt),'/',num2str(size(IMU_Data,1))]);
     end
     temp_imu_eul(idt,1) = IMU_Data(idt,1);
-    temp_imu_eul(idt,2:4) = quat2eul(IMU_Data(idt,10:13)).*[R2D,R2D,R2D];
-    %yaw
-    temp_imu_eul(idt,4) = -temp_imu_eul(idt,4);
-    if temp_imu_eul(idt,4) < 0
-        temp_imu_eul(idt,4) = temp_imu_eul(idt,4)+360;
-    end
-    %roll
-    if temp_imu_eul(idt,2)<0
-        temp_imu_eul(idt,2) = temp_imu_eul(idt,2)+360;
-    end
-    temp_imu_eul(idt,2) = -temp_imu_eul(idt,2)+180;
-    %pitch
-    temp_imu_eul(idt,3) = -temp_imu_eul(idt,3);
+    temp_imu_eul(idt,2:4) = quat2eul(IMU_Data(idt, 10:13)).*[R2D,R2D,R2D];  % ZYX %yaw, pitch, row: 2,3,4
 end
-IMU_Data(:,14:16) = temp_imu_eul(:,[3,2,4]); %(pitch; roll; yaw)
+IMU_Data(:,14:16) = temp_imu_eul(:,[3,4,2]); %(pitch; roll; yaw)
 disp('===> AHRS set up <===');
 
 
@@ -242,7 +231,7 @@ imuNoise.AccelerometerBiasNoise = diag([9.62361e-09  9.62361e-09 2.16531225e-08]
 %   Gyro bias random walk PSD (rad^2 s^-3)
 imuNoise.GyroscopeBiasNoise = 6.633890475354988e-09*eye(3)  ;% 4.0E-11 * eye(3);
 % Initial orient
-initOrient = quaternion(All_Orient(1,4),All_Orient(1,1),All_Orient(1,2),All_Orient(1,3));
+initOrient = quaternion(All_Orient(1,1),All_Orient(1,2),All_Orient(1,3),All_Orient(1,4));
 % Ground Truth 
 posLLH = CPT_Data(:,4:6);
 
@@ -271,7 +260,7 @@ LC_KF_config.gyro_bias_PSD = 4.0E-11;
 % Accelerometer noise PSD (micro-g^2 per Hz, converted to m^2 s^-3)
 LC_KF_config.accel_noise_PSD = 0.008^2;
 % Accelerometer bias random walk PSD (m^2 s^-5)
-LC_KF_config.accel_bias_PSD = 1E-5; 
+LC_KF_config.accel_bias_PSD = (1E-5); 
 
 % Position measurement noise SD per axis (m)
 LC_KF_config.pos_meas_SD = 25;
@@ -295,6 +284,8 @@ save ([EnvFolder,'IniResults/COMMOM_INFORMATION_FOR_BOTH_INTEGRATION_METHODS.mat
 save ('MAT_FILE_STOREING_STRING_OF_PATH_OF_EnvFolder.mat','EnvFolder');
 
 disp('===> All files saved <===');
+
+
 
 
 
