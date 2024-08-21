@@ -10,14 +10,14 @@ imu_data0 = readmatrix(IMU_directory);
 % Col-3: UTC_time      
 % Col-30-32: acc- xyz
 % Col-18-20: angular-xyz
-% Col-5-8: orientation in quaternion
+% Col-5-8: orientation in quaternion (x, y, z, w)
 
 %--->imu_data
 % Col-1: UTC_time      
 % Col-2-4: acc- xyz
 % Col-5-7: angular-xyz
-% Col-8-11: orientation in quaternion
-imu_data = imu_data0(:,[3,30:32,18:20,5:8]);
+% Col-8-11: orientation in quaternion (w, x, y, z)
+imu_data = imu_data0(:,[3, 30:32, 18:20, 8, 5:7]);
 
 for idt = 1:size(imu_data,1)
     [~,tow_sec] = time2weektow(imu_data(idt,1)*10^-9+18-315964800);
